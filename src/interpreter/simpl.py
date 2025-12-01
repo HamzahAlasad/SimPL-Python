@@ -2,7 +2,7 @@ import sys
 from simpl_parser import Lexer, Parser
 from simpl_interpreter import InitialState, Mem, Int, RuntimeError
 from simpl_typing import DefaultTypeEnv, TypeError, TypeCircularityError
-from simpl_library import initial_runtime_env, initial_type_env
+from simpl_lib import initial_runtime_env, initial_type_env
 
 def run(filename):
     try:
@@ -31,4 +31,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         run(sys.argv[1])
     else:
-        print("Usage: python simpl.py <filename>")
+        print("no input file")

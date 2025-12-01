@@ -1,0 +1,10 @@
+{
+    "python.analysis.extraPaths": [
+        "./src/interpreter/library",
+        "./src/interpreter/lib",
+        "./src/typing",
+        "./src/interpreter",
+        "./src/parser/ast",
+        "./src/parser"
+    ]
+}
