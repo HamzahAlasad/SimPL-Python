@@ -1,7 +1,7 @@
 import sys
 from simpl_parser import Lexer, Parser
 from simpl_interpreter import InitialState, Mem, Int, RuntimeError
-from simpl_typing import DefaultTypeEnv, TypeError, TypeCircularityError
+from simpl_typing import TypeError, TypeCircularityError
 from simpl_lib import initial_runtime_env, initial_type_env
 
 def run(filename):

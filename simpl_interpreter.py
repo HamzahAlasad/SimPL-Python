@@ -65,7 +65,7 @@ class RecValue(Value):
         self.e = e
     def __eq__(self, other): return self is other
 
-# statics
+# Statics
 Value.UNIT = UnitValue()
 Value.NIL = NilValue()
 
@@ -106,3 +106,6 @@ class State:
     @staticmethod
     def of(E, M, p):
         return State(E, M, p)
+
+class InitialState(State):
+    pass

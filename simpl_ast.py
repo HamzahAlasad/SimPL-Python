@@ -1,6 +1,5 @@
 from simpl_typing import *
 from simpl_interpreter import *
-from simpl_lib import *
 
 class Expr:
     def typecheck(self, E): raise NotImplementedError()
@@ -33,11 +32,11 @@ class Name(Expr):
     def __str__(self): return str(self.x)
     def typecheck(self, E):
         t = E.get(self.x)
-        if t is None: raise TypeError(f"variable {self.x} not found")
+        if t is None: raise TypeError(f"name")
         return TypeResult.of(Identity(), t)
     def eval(self, s):
         v = s.E.get(self.x)
-        if v is None: raise RuntimeError(f"variable {self.x} not defined")
+        if v is None: raise RuntimeError(f"name")
         if isinstance(v, RecValue):
             return Rec(v.x, v.e).eval(State.of(v.E, s.M, s.p))
         return v
@@ -61,7 +60,7 @@ class Add(BinaryExpr):
 
 class Sub(BinaryExpr):
     def __str__(self): return f"({self.l} - {self.r})"
-    def typecheck(self, E):
+    def typecheck(self, E): 
         r1 = self.l.typecheck(E)
         r2 = self.r.typecheck(r1.s.compose(E))
         s = r2.s.compose(r1.s)
@@ -94,7 +93,7 @@ class Div(BinaryExpr):
         return TypeResult.of(s, Type.INT)
     def eval(self, s):
         v2 = self.r.eval(s).n
-        if v2 == 0: raise RuntimeError("Division by zero")
+        if v2 == 0: raise RuntimeError("division by zero")
         return IntValue(int(self.l.eval(s).n / v2))
 
 class Mod(BinaryExpr):
@@ -108,7 +107,7 @@ class Mod(BinaryExpr):
         return TypeResult.of(s, Type.INT)
     def eval(self, s):
         v2 = self.r.eval(s).n
-        if v2 == 0: raise RuntimeError("Division by zero")
+        if v2 == 0: raise RuntimeError("division by zero")
         return IntValue(self.l.eval(s).n % v2)
 
 class Eq(BinaryExpr):
@@ -119,7 +118,7 @@ class Eq(BinaryExpr):
         s = r2.s.compose(r1.s)
         s = s.compose(r1.t.unify(r2.t))
         if not s.apply(r1.t).is_equality_type():
-            raise TypeError("Equality test on non-equality type")
+            raise TypeError("eq")
         return TypeResult.of(s, Type.BOOL)
     def eval(self, s):
         return BoolValue(self.l.eval(s) == self.r.eval(s))
@@ -132,7 +131,7 @@ class Neq(BinaryExpr):
         s = r2.s.compose(r1.s)
         s = s.compose(r1.t.unify(r2.t))
         if not s.apply(r1.t).is_equality_type():
-            raise TypeError("Equality test on non-equality type")
+            raise TypeError("neq")
         return TypeResult.of(s, Type.BOOL)
     def eval(self, s):
         return BoolValue(not (self.l.eval(s) == self.r.eval(s)))
@@ -269,6 +268,7 @@ class App(BinaryExpr):
         return TypeResult.of(s, s.apply(alpha))
     
     def eval(self, s):
+        from simpl_lib import fst, snd, hd, tl 
         f = self.l.eval(s)
         v = self.r.eval(s)
         
@@ -327,7 +327,7 @@ class Deref(UnaryExpr):
     def eval(self, s):
         ptr = self.e.eval(s)
         v = s.M.get(ptr.p)
-        if v is None: raise RuntimeError("Segmentation fault")
+        if v is None: raise RuntimeError("deref")
         return v
 
 class Group(UnaryExpr):
