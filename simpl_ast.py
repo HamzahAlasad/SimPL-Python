@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from simpl_typing import *
 from simpl_interpreter import *
 
@@ -7,15 +8,17 @@ class Expr:
     def eval(self, s): raise NotImplementedError()
 
 
+@dataclass
 class IntegerLiteral(Expr):
-    def __init__(self, n): self.n = n
+    n: int
     def __str__(self): return str(self.n)
     def typecheck(self, E): return TypeResult.of(Identity(), Type.INT)
     def eval(self, s): return IntValue(self.n)
 
 
+@dataclass
 class BooleanLiteral(Expr):
-    def __init__(self, b): self.b = b
+    b: bool
     def __str__(self): return str(self.b).lower()
     def typecheck(self, E): return TypeResult.of(Identity(), Type.BOOL)
     def eval(self, s): return BoolValue(self.b)
@@ -35,29 +38,30 @@ class Nil(Expr):
     def eval(self, s): return Value.NIL
 
 
+@dataclass
 class Name(Expr):
-    def __init__(self, x): self.x = x
+    x: str
     def __str__(self): return str(self.x)
 
     def typecheck(self, E):
         t = E.get(self.x)
         if t is None:
-            raise TypeError(f"name")
+            raise TypeError("name")
         return TypeResult.of(Identity(), t)
 
     def eval(self, s):
         v = s.E.get(self.x)
         if v is None:
-            raise RuntimeError(f"name")
+            raise RuntimeError("name")
         if isinstance(v, RecValue):
             return Rec(v.x, v.e).eval(State.of(v.E, s.M, s.p))
         return v
 
 
+@dataclass
 class BinaryExpr(Expr):
-    def __init__(self, l, r):
-        self.l = l
-        self.r = r
+    l: Expr
+    r: Expr
 
 
 class Add(BinaryExpr):
@@ -359,8 +363,9 @@ class App(BinaryExpr):
         return f.e.eval(State.of(new_env, s.M, s.p))
 
 
+@dataclass
 class UnaryExpr(Expr):
-    def __init__(self, e): self.e = e
+    e: Expr
 
 
 class Neg(UnaryExpr):
@@ -425,12 +430,11 @@ class Group(UnaryExpr):
     def eval(self, s): return self.e.eval(s)
 
 
+@dataclass
 class Cond(Expr):
-    def __init__(self, e1, e2, e3):
-        self.e1 = e1
-        self.e2 = e2
-        self.e3 = e3
-
+    e1: Expr
+    e2: Expr
+    e3: Expr
     def __str__(self): return f"(if {self.e1} then {self.e2} else {self.e3})"
 
     def typecheck(self, E):
@@ -450,11 +454,10 @@ class Cond(Expr):
             return self.e3.eval(s)
 
 
+@dataclass
 class Loop(Expr):
-    def __init__(self, e1, e2):
-        self.e1 = e1
-        self.e2 = e2
-
+    e1: Expr
+    e2: Expr
     def __str__(self): return f"(while {self.e1} do {self.e2})"
 
     def typecheck(self, E):
@@ -469,12 +472,11 @@ class Loop(Expr):
         return Value.UNIT
 
 
+@dataclass
 class Let(Expr):
-    def __init__(self, x, e1, e2):
-        self.x = x
-        self.e1 = e1
-        self.e2 = e2
-
+    x: str
+    e1: Expr
+    e2: Expr
     def __str__(self): return f"(let {self.x} = {self.e1} in {self.e2})"
 
     def typecheck(self, E):
@@ -488,11 +490,10 @@ class Let(Expr):
         return self.e2.eval(State.of(Env(s.E, self.x, v1), s.M, s.p))
 
 
+@dataclass
 class Fn(Expr):
-    def __init__(self, x, e):
-        self.x = x
-        self.e = e
-
+    x: str
+    e: Expr
     def __str__(self): return f"(fn {self.x}.{self.e})"
 
     def typecheck(self, E):
@@ -505,11 +506,10 @@ class Fn(Expr):
         return FunValue(s.E, self.x, self.e)
 
 
+@dataclass
 class Rec(Expr):
-    def __init__(self, x, e):
-        self.x = x
-        self.e = e
-
+    x: str
+    e: Expr
     def __str__(self): return f"(rec {self.x}.{self.e})"
 
     def typecheck(self, E):

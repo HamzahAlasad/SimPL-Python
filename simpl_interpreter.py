@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+
+
 class RuntimeError(Exception):
     pass
 
@@ -6,18 +9,16 @@ class Value:
     pass
 
 
+@dataclass
 class IntValue(Value):
-    def __init__(self, n): self.n = n
+    n: int
     def __str__(self): return str(self.n)
-    def __eq__(self, other): return isinstance(
-        other, IntValue) and self.n == other.n
 
 
+@dataclass
 class BoolValue(Value):
-    def __init__(self, b): self.b = b
+    b: bool
     def __str__(self): return str(self.b).lower()
-    def __eq__(self, other): return isinstance(
-        other, BoolValue) and self.b == other.b
 
 
 class UnitValue(Value):
@@ -30,21 +31,17 @@ class NilValue(Value):
     def __eq__(self, other): return isinstance(other, NilValue)
 
 
+@dataclass
 class PairValue(Value):
-    def __init__(self, v1, v2):
-        self.v1 = v1
-        self.v2 = v2
-
+    v1: Value
+    v2: Value
     def __str__(self): return f"pair@{self.v1}@{self.v2}"
 
-    def __eq__(self, other):
-        return isinstance(other, PairValue) and self.v1 == other.v1 and self.v2 == other.v2
 
-
+@dataclass
 class ConsValue(Value):
-    def __init__(self, v1, v2):
-        self.v1 = v1
-        self.v2 = v2
+    v1: Value
+    v2: Value
 
     def __str__(self): return f"list@{self.length()}"
 
@@ -55,46 +52,39 @@ class ConsValue(Value):
             return 1 + self.v2.length()
         return 1
 
-    def __eq__(self, other):
-        return isinstance(other, ConsValue) and self.v1 == other.v1 and self.v2 == other.v2
 
-
+@dataclass
 class RefValue(Value):
-    def __init__(self, p): self.p = p
+    p: int
     def __str__(self): return f"ref@{self.p}"
-    def __eq__(self, other): return isinstance(
-        other, RefValue) and self.p == other.p
 
 
+@dataclass
 class FunValue(Value):
-    def __init__(self, E, x, e):
-        self.E = E
-        self.x = x
-        self.e = e
-
+    E: 'Env'
+    x: str
+    e: 'Expr'
     def __str__(self): return "fun"
     def __eq__(self, other): return self is other
 
 
+@dataclass
 class RecValue(Value):
-    def __init__(self, E, x, e):
-        self.E = E
-        self.x = x
-        self.e = e
-
+    E: 'Env'
+    x: str
+    e: 'Expr'
     def __eq__(self, other): return self is other
 
 
-# Statics
 Value.UNIT = UnitValue()
 Value.NIL = NilValue()
 
 
+@dataclass
 class Env:
-    def __init__(self, E, x, v):
-        self.E = E
-        self.x = x
-        self.v = v
+    E: 'Env'
+    x: str
+    v: Value
 
     @staticmethod
     def empty(): return None
@@ -110,25 +100,30 @@ class Env:
         return self
 
 
+@dataclass
 class Mem:
-    def __init__(self):
-        self.map = {}
+    map: dict = None
+
+    def __post_init__(self):
+        if self.map is None:
+            self.map = {}
 
     def get(self, p): return self.map.get(p)
     def put(self, p, v): self.map[p] = v
 
 
+@dataclass
 class Int:
-    def __init__(self, n): self.n = n
+    n: int
     def get(self): return self.n
     def set(self, n): self.n = n
 
 
+@dataclass
 class State:
-    def __init__(self, E, M, p):
-        self.E = E
-        self.M = M
-        self.p = p
+    E: Env
+    M: Mem
+    p: Int
 
     @staticmethod
     def of(E, M, p):
