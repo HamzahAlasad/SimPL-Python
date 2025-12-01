@@ -1,6 +1,7 @@
 import re
 from simpl_ast import *
 
+
 class Lexer:
     def __init__(self, text):
         self.text = text
@@ -9,11 +10,14 @@ class Lexer:
         self.idx = 0
 
     def tokenize(self):
+        keywords = {'let', 'in', 'end', 'if', 'then',
+                    'else', 'while', 'do', 'fn', 'rec'}
+
         token_specs = [
             ('COMMENT', r'\(\*.*?\*\)'),
             ('NUM', r'\d+'),
             ('ID', r'[a-zA-Z_][a-zA-Z0-9_\']*'),
-            ('SYMBOLS', r':=|::|<=|>=|<>|=>|->|[+\-*/%~=<>!;,()]'),
+            ('SYMBOLS', r':=|::|<=|>=|<>|=>|->|[-+*/%~=<>!;,()]'),
             ('SKIP', r'[ \t\r\n]+'),
             ('MISC', r'.'),
         ]
@@ -24,36 +28,49 @@ class Lexer:
                 depth = 1
                 i += 2
                 while i < len(self.text) and depth > 0:
-                    if self.text[i:i+2] == '(*': depth += 1; i += 2
-                    elif self.text[i:i+2] == '*)': depth -= 1; i += 2
-                    else: i += 1
+                    if self.text[i:i+2] == '(*':
+                        depth += 1
+                        i += 2
+                    elif self.text[i:i+2] == '*)':
+                        depth -= 1
+                        i += 2
+                    else:
+                        i += 1
                 continue
-            
+
             match = None
             for type, regex in token_specs:
-                if type == 'COMMENT': continue
+                if type == 'COMMENT':
+                    continue
                 regex_compiled = re.compile(regex)
                 m = regex_compiled.match(self.text, i)
                 if m:
                     match = m
-                    if type != 'SKIP':
-                        tokens.append((type, m.group(0)))
+                    val = m.group(0)
+                    if type == 'ID' and val in keywords:
+                        tokens.append(('KEYWORD', val))
+                    elif type != 'SKIP':
+                        tokens.append((type, val))
                     i = m.end()
                     break
             if not match:
-                i += 1 
+                i += 1
         return tokens
 
     def peek(self):
-        if self.idx < len(self.tokens): return self.tokens[self.idx]
+        if self.idx < len(self.tokens):
+            return self.tokens[self.idx]
         return ('EOF', None)
 
     def consume(self, type=None, val=None):
         t = self.peek()
-        if type and t[0] != type: return None
-        if val and t[1] != val: return None
+        if type and t[0] != type:
+            return None
+        if val and t[1] != val:
+            return None
         self.idx += 1
         return t
+
 
 class Parser:
     def __init__(self, lexer):
@@ -127,7 +144,7 @@ class Parser:
             right = self.parse_orelse()
             left = Assign(left, right)
         return left
-    
+
     def parse_orelse(self):
         left = self.parse_andalso()
         while self.lexer.peek()[1] == 'orelse':
@@ -150,14 +167,20 @@ class Parser:
         if t in ['=', '<>', '<', '<=', '>', '>=']:
             op = self.lexer.consume()[1]
             right = self.parse_cons()
-            if op == '=': return Eq(left, right)
-            if op == '<>': return Neq(left, right)
-            if op == '<': return Less(left, right)
-            if op == '<=': return LessEq(left, right)
-            if op == '>': return Greater(left, right)
-            if op == '>=': return GreaterEq(left, right)
+            if op == '=':
+                return Eq(left, right)
+            if op == '<>':
+                return Neq(left, right)
+            if op == '<':
+                return Less(left, right)
+            if op == '<=':
+                return LessEq(left, right)
+            if op == '>':
+                return Greater(left, right)
+            if op == '>=':
+                return GreaterEq(left, right)
         return left
-    
+
     def parse_cons(self):
         left = self.parse_arith()
         if self.lexer.peek()[1] == '::':
@@ -226,11 +249,15 @@ class Parser:
 
     def parse_atom(self):
         t = self.lexer.consume()
-        if t[0] == 'NUM': return IntegerLiteral(int(t[1]))
-        if t[0] == 'ID': 
-            if t[1] == 'true': return BooleanLiteral(True)
-            if t[1] == 'false': return BooleanLiteral(False)
-            if t[1] == 'nil': return Nil()
+        if t[0] == 'NUM':
+            return IntegerLiteral(int(t[1]))
+        if t[0] == 'ID':
+            if t[1] == 'true':
+                return BooleanLiteral(True)
+            if t[1] == 'false':
+                return BooleanLiteral(False)
+            if t[1] == 'nil':
+                return Nil()
             return Name(t[1])
         if t[1] == '(':
             if self.lexer.peek()[1] == ')':
@@ -244,4 +271,5 @@ class Parser:
                 return Pair(e, e2)
             self.lexer.consume(val=')')
             return Group(e)
+
         raise Exception(f"Unexpected token: {t}")
